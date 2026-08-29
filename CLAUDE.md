@@ -292,6 +292,54 @@ Camera response, sound and animation may reinforce the weight.
 
 ---
 
+## UI Visual Direction
+
+Reference screenshots live in `assets/references/ui`. Use them for quality bar and visual language ONLY — never copy another game's exact interface, layout, icons, or screen composition.
+
+The target is bold, modern Roblox simulator UI: polished and intentionally designed, never minimalist, never generic SaaS-style.
+
+**Typography & outlines**
+
+* One heavy rounded display font everywhere
+* White text with a strong black stroke
+* Thick black outlines on text and frames (UIStroke, gradient inside the stroke for bevel)
+
+**Shape & shadow**
+
+* Chunky rectangular buttons with slightly rounded corners
+* Hard offset drop shadows (e.g. 0, 4px), never soft modern blurs
+* Studded/blocky texture treatment where appropriate, matching the world's graybox-brick look
+
+**Color**
+
+* Bright, saturated, semantic, held rigidly:
+  * green = positive/buy/money
+  * red = sell/negative/close
+  * blue = information
+  * gold/yellow = premium/reward
+
+**Iconography**
+
+* Playful cartoon icons, consistent set, one sprite sheet
+* Icons carry meaning before text does
+
+**Hierarchy & mobile**
+
+* Strong visual hierarchy — the one thing that matters on screen reads first
+* Large touch targets
+* Excellent mobile readability at small screen sizes
+
+**Motion**
+
+* Animated counters — currency counts up, never snaps
+* Responsive button press feedback (fast press tween, ~0.08s)
+* Bouncy back-easing transitions on open (~0.25s)
+* A click sound on every button
+
+These rules extend the "UI craft" section of `GAME_DESIGN.md`; if they ever conflict, `GAME_DESIGN.md` wins.
+
+---
+
 # Server Authority
 
 Gameplay state is server-authoritative.

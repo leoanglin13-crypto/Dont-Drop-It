@@ -21,6 +21,10 @@ Config.Pickup = {
 	MaxPickupDistance = 12,
 }
 
+Config.RingZones = {
+	DetectionInterval = 0.2,
+}
+
 Config.BaseWalkSpeed = 16
 Config.StartingCarryWeight = 30
 

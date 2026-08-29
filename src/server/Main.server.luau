@@ -1,25 +1,30 @@
 -- Single server entry point. Systems start in a deliberate order:
--- player state first, then the world, then interactions.
+-- player state first, then the world, then movement, then interactions.
 
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local CarryState = require(script.Parent.CarryState)
 local AnimalSpawner = require(script.Parent.AnimalSpawner)
+local RingZones = require(script.Parent.RingZones)
+local WeightMovement = require(script.Parent.WeightMovement)
 local Pickup = require(script.Parent.Pickup)
 
 CarryState.Start()
 AnimalSpawner.Start()
+RingZones.Start()
+WeightMovement.Start()
 Pickup.Start()
 
--- Studio-only debug bridge: lets test tooling drive the LIVE module instances
--- (external execution contexts get their own require cache, so requiring the
--- modules there reaches a different, empty copy). Server-side only; never
--- exists in production servers.
 if RunService:IsStudio() then
+	-- Studio-only test bridge for driving the live module instances from
+	-- external test tooling. Everything below exists ONLY in Studio; a
+	-- published production server never creates any debug bridge.
 	local modules = {
 		AnimalSpawner = AnimalSpawner,
 		CarryState = CarryState,
+		RingZones = RingZones,
+		WeightMovement = WeightMovement,
 		Pickup = Pickup,
 	}
 	local bridge = Instance.new("BindableFunction")

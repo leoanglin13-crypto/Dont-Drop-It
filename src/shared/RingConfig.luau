@@ -1,12 +1,10 @@
--- Radii are temporary graybox bands in studs, measured from the FieldCenter
--- marker. Deeper rings sit closer to the center. Rings 4 and 5 belong to the
--- full five-ring game and have no geometry during the three-ring MVP.
 local RingConfig = {
 	[1] = {
 		Name = "Common",
 		Active = true,
-		InnerRadius = 73.3,
-		OuterRadius = 110,
+		InnerRadius = 187.5,
+		OuterRadius = 300,
+		MaxAnimals = 12,
 		BumpingEnabled = false,
 		RangersEnabled = false,
 	},
@@ -14,8 +12,9 @@ local RingConfig = {
 	[2] = {
 		Name = "Rare",
 		Active = true,
-		InnerRadius = 36.7,
-		OuterRadius = 73.3,
+		InnerRadius = 112.5,
+		OuterRadius = 187.5,
+		MaxAnimals = 8,
 		BumpingEnabled = true,
 		RangersEnabled = true,
 	},
@@ -23,15 +22,19 @@ local RingConfig = {
 	[3] = {
 		Name = "Epic",
 		Active = true,
-		InnerRadius = 0,
-		OuterRadius = 36.7,
+		InnerRadius = 50,
+		OuterRadius = 112.5,
+		MaxAnimals = 6,
 		BumpingEnabled = true,
 		RangersEnabled = true,
 	},
 
 	[4] = {
 		Name = "Legendary",
-		Active = false,
+		Active = true,
+		InnerRadius = 0,
+		OuterRadius = 50,
+		MaxAnimals = 4,
 		BumpingEnabled = true,
 		RangersEnabled = true,
 	},

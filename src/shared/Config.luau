@@ -2,12 +2,18 @@ local Config = {}
 
 Config.ServerSize = 8
 
-Config.FieldRadius = 110
-Config.ZooLineOffset = 15
+Config.FieldRadius = 300
+Config.ZooLineOffset = 30
 
 -- Gameplay code locates the field via a Studio marker with this name, never
 -- a hard-coded position, so the world can be repositioned without code changes.
 Config.FieldCenterMarkerName = "FieldCenter"
+
+Config.Spawning = {
+	RespawnSeconds = 8,
+	FieldCenterWaitTimeout = 10,
+	SpawnRaycastHeight = 100,
+}
 
 Config.BaseWalkSpeed = 16
 Config.StartingCarryWeight = 30

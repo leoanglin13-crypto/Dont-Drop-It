@@ -1,5 +1,5 @@
--- Active = spawnable during the three-ring MVP. Inactive animals stay here
--- for the full five-ring design but must never spawn until reactivated.
+-- Active = spawnable in the current four-ring prototype. Inactive animals stay
+-- here for the full five-ring design but must never spawn until reactivated.
 local AnimalConfig = {
 	Frog = {
 		Ring = 1,
@@ -49,7 +49,14 @@ local AnimalConfig = {
 		Ring = 4,
 		Weight = 14,
 		IncomePerSecond = 3100,
-		Active = false,
+		Active = true,
+	},
+
+	Elephant = {
+		Ring = 4,
+		Weight = 15,
+		IncomePerSecond = 4400,
+		Active = true,
 	},
 }
 

@@ -104,6 +104,23 @@ function CarryState.AddAnimal(player: Player, record): boolean
 	return true
 end
 
+-- Atomically removes and returns every carried record, in carry order.
+-- This is the single synchronous claim point for consuming a carried stack
+-- (bank now, spill later): exactly one caller receives the records, so the
+-- same carried animals can never be consumed twice.
+function CarryState.TakeAll(player: Player)
+	local state = states[player]
+	if not state or #state.animals == 0 then
+		return {}
+	end
+	local taken = state.animals
+	state.animals = {}
+	state.totalWeight = 0
+	updateAttributes(player, state)
+	fireChanged(player)
+	return taken
+end
+
 function CarryState.Start()
 	Players.PlayerAdded:Connect(CarryState.InitPlayer)
 	Players.PlayerRemoving:Connect(CarryState.RemovePlayer)

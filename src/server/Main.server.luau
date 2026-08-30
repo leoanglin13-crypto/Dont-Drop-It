@@ -6,6 +6,9 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local CarryState = require(script.Parent.CarryState)
 local CarryReplication = require(script.Parent.CarryReplication)
+local Economy = require(script.Parent.Economy)
+local Bank = require(script.Parent.Bank)
+local ZooPlots = require(script.Parent.ZooPlots)
 local AnimalSpawner = require(script.Parent.AnimalSpawner)
 local RingZones = require(script.Parent.RingZones)
 local WeightMovement = require(script.Parent.WeightMovement)
@@ -13,6 +16,11 @@ local Pickup = require(script.Parent.Pickup)
 
 CarryState.Start()
 CarryReplication.Start()
+Economy.Start()
+-- Bank subscribes to plot assignment, so it must start before ZooPlots
+-- assigns plots to already-present players.
+Bank.Start()
+ZooPlots.Start()
 AnimalSpawner.Start()
 RingZones.Start()
 WeightMovement.Start()
@@ -26,6 +34,9 @@ if RunService:IsStudio() then
 		AnimalSpawner = AnimalSpawner,
 		CarryState = CarryState,
 		CarryReplication = CarryReplication,
+		Economy = Economy,
+		Bank = Bank,
+		ZooPlots = ZooPlots,
 		RingZones = RingZones,
 		WeightMovement = WeightMovement,
 		Pickup = Pickup,

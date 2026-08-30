@@ -25,6 +25,49 @@ Config.RingZones = {
 	DetectionInterval = 0.2,
 }
 
+Config.Economy = {
+	IncomeTickSeconds = 1,
+}
+
+Config.Banking = {
+	PromptDistance = 10,
+	-- Server-side revalidation limit: prompt distance plus latency slack.
+	MaxBankDistance = 16,
+	-- Player-facing terminology: the home is a "Sanctuary" and animals are
+	-- PLACED there, never "banked". Bank/banked stays internal-only.
+	-- Ownership is communicated by the permanent SanctuaryLabel, so the
+	-- prompt carries no ObjectText of its own.
+	PromptActionText = "Add to Sanctuary",
+	PromptObjectText = "",
+}
+
+-- Client-only world-space label marking the local player's own Sanctuary.
+Config.SanctuaryLabel = {
+	Text = "Your Sanctuary",
+	-- Studs above the entrance part.
+	HeightAboveEntrance = 8,
+	-- Billboard size in studs (scale-based sizing).
+	WidthStuds = 14,
+	HeightStuds = 3,
+	MaxDistance = 500,
+}
+
+Config.ZooPlots = {
+	PlotCount = 8,
+	-- Jadon-owned world parts are located by name, never by hard-coded
+	-- references, so the world can change without code changes.
+	PlotNamePrefix = "zooplot_",
+	EntranceNamePrefix = "ZooEntrance_",
+	Spawn = {
+		-- Studs from the entrance back toward the plot interior, so the
+		-- character stands inside their plot, not on the entrance line.
+		InsetFromEntrance = 4,
+		-- Lift above the entrance surface so the character never spawns
+		-- intersecting the plot geometry.
+		SpawnHeight = 3,
+	},
+}
+
 Config.StackRender = {
 	-- placeholder visual size = BaseVisualSize * weight ^ WeightScaleExponent
 	BaseVisualSize = 1.6,

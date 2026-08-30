@@ -10,7 +10,17 @@ Config.ZooLineOffset = 30
 Config.FieldCenterMarkerName = "FieldCenter"
 
 Config.Spawning = {
-	RespawnSeconds = 8,
+	-- Per-ring replacement timing: deeper rings refill slower, so taking a
+	-- Legendary matters to the whole server. 10+ minute / event-driven timing
+	-- is reserved for future Secret/Mythic/event animals, not normal rings.
+	RespawnSecondsByRing = {
+		[1] = 30,
+		[2] = 60,
+		[3] = 120,
+		[4] = 240,
+	},
+	-- Fallback for a ring missing from the table above.
+	DefaultRespawnSeconds = 60,
 	FieldCenterWaitTimeout = 10,
 	SpawnRaycastHeight = 100,
 }

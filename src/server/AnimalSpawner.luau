@@ -202,7 +202,9 @@ function AnimalSpawner.RemoveAnimal(id: string)
 	ringCounts[animal.Ring] -= 1
 	animal.Part:Destroy()
 
-	task.delay(Config.Spawning.RespawnSeconds, function()
+	local respawnSeconds = Config.Spawning.RespawnSecondsByRing[animal.Ring]
+		or Config.Spawning.DefaultRespawnSeconds
+	task.delay(respawnSeconds, function()
 		if started then
 			populateRing(animal.Ring)
 		end

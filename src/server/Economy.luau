@@ -16,6 +16,20 @@ local Economy = {}
 
 local states = {} -- Player -> { cash, bankedIncomePerSecond, bankedAnimals }
 
+-- Fired (player) after the banked collection changes, so display systems can
+-- react without Economy knowing about rendering.
+local bankedChangedListeners = {}
+
+function Economy.OnBankedChanged(callback)
+	table.insert(bankedChangedListeners, callback)
+end
+
+local function fireBankedChanged(player)
+	for _, callback in ipairs(bankedChangedListeners) do
+		task.spawn(callback, player)
+	end
+end
+
 local function updateAttributes(player, state)
 	player:SetAttribute("Cash", state.cash)
 	player:SetAttribute("BankedIncomePerSecond", state.bankedIncomePerSecond)
@@ -61,6 +75,7 @@ function Economy.AddBankedAnimals(player: Player, records): number?
 	local added = total - state.bankedIncomePerSecond
 	state.bankedIncomePerSecond = total
 	updateAttributes(player, state)
+	fireBankedChanged(player)
 	return added
 end
 

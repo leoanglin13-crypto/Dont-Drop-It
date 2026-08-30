@@ -41,6 +41,24 @@ Config.Banking = {
 	PromptObjectText = "",
 }
 
+-- Server-rendered display of secured animals inside the owner's Sanctuary.
+-- The grid lives in plot-LOCAL space (plots are rotated in 45-degree steps),
+-- filling from the back of the plot toward the entrance, so one layout works
+-- for all eight plots. 5x4 keeps every slot center inside the plot's
+-- elliptical 32x22 footprint and clear of the spawn point by the entrance.
+Config.SanctuaryDisplay = {
+	Columns = 5,
+	MaxRows = 4,
+	SpacingX = 4.5,
+	SpacingZ = 4.5,
+	-- Studs between the plot's back edge and the first row.
+	EdgePadding = 2.5,
+	-- placeholder visual: size = BaseVisualSize * weight ^ WeightScaleExponent
+	-- (smaller than the field placeholders so big animals fit the grid)
+	BaseVisualSize = 1.2,
+	WeightScaleExponent = 0.3,
+}
+
 -- Client-only world-space label marking the local player's own Sanctuary.
 Config.SanctuaryLabel = {
 	Text = "Your Sanctuary",
@@ -105,7 +123,7 @@ Config.StackRender = {
 	DefaultColor = Color3.fromRGB(180, 180, 180),
 }
 
-Config.BaseWalkSpeed = 20
+Config.BaseWalkSpeed = 22
 Config.StartingCarryWeight = 30
 
 Config.SpeedExponent = 1.4

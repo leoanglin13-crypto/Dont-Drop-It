@@ -11,6 +11,20 @@ local CarryState = {}
 
 local states = {} -- Player -> { animals = {ordered records}, totalWeight, capacity }
 
+-- Minimal state-change signal so other systems (e.g. replication) can react
+-- without CarryState knowing about networking.
+local changedListeners = {}
+
+function CarryState.OnChanged(callback)
+	table.insert(changedListeners, callback)
+end
+
+local function fireChanged(player)
+	for _, callback in ipairs(changedListeners) do
+		task.spawn(callback, player)
+	end
+end
+
 local function updateAttributes(player, state)
 	player:SetAttribute("CarriedWeight", state.totalWeight)
 	player:SetAttribute("CarriedCount", #state.animals)
@@ -28,10 +42,12 @@ function CarryState.InitPlayer(player: Player)
 	}
 	states[player] = state
 	updateAttributes(player, state)
+	fireChanged(player)
 end
 
 function CarryState.RemovePlayer(player: Player)
 	states[player] = nil
+	fireChanged(player)
 end
 
 -- Ordered shallow snapshot; mutating the result never touches real state.
@@ -84,6 +100,7 @@ function CarryState.AddAnimal(player: Player, record): boolean
 	table.insert(state.animals, record)
 	state.totalWeight += record.Weight
 	updateAttributes(player, state)
+	fireChanged(player)
 	return true
 end
 

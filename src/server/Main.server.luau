@@ -5,12 +5,14 @@ local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local CarryState = require(script.Parent.CarryState)
+local CarryReplication = require(script.Parent.CarryReplication)
 local AnimalSpawner = require(script.Parent.AnimalSpawner)
 local RingZones = require(script.Parent.RingZones)
 local WeightMovement = require(script.Parent.WeightMovement)
 local Pickup = require(script.Parent.Pickup)
 
 CarryState.Start()
+CarryReplication.Start()
 AnimalSpawner.Start()
 RingZones.Start()
 WeightMovement.Start()
@@ -23,6 +25,7 @@ if RunService:IsStudio() then
 	local modules = {
 		AnimalSpawner = AnimalSpawner,
 		CarryState = CarryState,
+		CarryReplication = CarryReplication,
 		RingZones = RingZones,
 		WeightMovement = WeightMovement,
 		Pickup = Pickup,

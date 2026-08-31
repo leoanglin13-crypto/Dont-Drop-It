@@ -121,11 +121,39 @@ function CarryState.TakeAll(player: Player)
 	return taken
 end
 
+-- "You lose the trip, never the property": dying or resetting forfeits every
+-- currently carried animal. Without this, respawning at the Sanctuary would
+-- let players skip the escape entirely (grab deep -> reset -> place safely).
+-- Banked animals, Cash and the Sanctuary are never touched here.
+local function watchCharacter(player: Player, character: Model)
+	local humanoid = character:WaitForChild("Humanoid", 10)
+	if not humanoid or not humanoid:IsA("Humanoid") then
+		return
+	end
+	humanoid.Died:Connect(function()
+		local lost = CarryState.TakeAll(player)
+		if #lost > 0 then
+			print(("[CarryState] %s died — trip lost (%d carried animals forfeited)"):format(
+				player.Name, #lost))
+		end
+	end)
+end
+
+local function watchPlayer(player: Player)
+	CarryState.InitPlayer(player)
+	player.CharacterAdded:Connect(function(character)
+		task.spawn(watchCharacter, player, character)
+	end)
+	if player.Character then
+		task.spawn(watchCharacter, player, player.Character)
+	end
+end
+
 function CarryState.Start()
-	Players.PlayerAdded:Connect(CarryState.InitPlayer)
+	Players.PlayerAdded:Connect(watchPlayer)
 	Players.PlayerRemoving:Connect(CarryState.RemovePlayer)
 	for _, player in ipairs(Players:GetPlayers()) do
-		CarryState.InitPlayer(player)
+		watchPlayer(player)
 	end
 end
 

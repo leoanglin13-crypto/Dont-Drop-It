@@ -24,12 +24,21 @@ local DEFAULT_COLOR = Color3.fromRGB(180, 180, 180)
 
 local rng = Random.new()
 
-local animals = {} -- id -> { Id, Type, Ring, Weight, IncomePerSecond, Part }
+local animals = {} -- id -> { Id, Type, Ring, Weight, IncomePerSecond, Part, Slot? }
 local ringCounts = {} -- ring number -> live animal count
 local spawnTables = {} -- ring number -> array of active animal type names
 local fieldCenter: BasePart? = nil
 local animalsFolder: Folder? = nil
 local started = false
+
+-- Even distribution: each ring's circumference is divided into MaxAnimals
+-- angular sectors and every ring-spawned animal owns one sector, so no side
+-- of the field is ever starved while another clumps. Positions are still
+-- randomized inside the sector (angle jitter + area-aware radius), and each
+-- ring gets a random base rotation per server, so nothing reads as a grid.
+-- Spilled animals land wherever they were dropped and own no sector.
+local ringSlots = {} -- ring number -> { [slotIndex] = animalId }
+local ringSlotRotation = {} -- ring number -> base rotation (radians)
 
 local function buildSpawnTables()
 	for animalType, animal in pairs(AnimalConfig) do
@@ -51,6 +60,11 @@ local function buildSpawnTables()
 
 		spawnTables[animal.Ring] = spawnTables[animal.Ring] or {}
 		table.insert(spawnTables[animal.Ring], animalType)
+
+		if not ringSlots[animal.Ring] then
+			ringSlots[animal.Ring] = {}
+			ringSlotRotation[animal.Ring] = rng:NextNumber(0, 2 * math.pi)
+		end
 	end
 
 	for ringNumber, ring in pairs(RingConfig) do
@@ -60,14 +74,37 @@ local function buildSpawnTables()
 	end
 end
 
-local function randomPositionInRing(ringNumber: number): Vector3
+-- A random free sector for the next spawn. Free slots are chosen uniformly
+-- (never "the same sector again") so simultaneous respawns spread out.
+local function pickFreeSlot(ringNumber: number): number?
+	local max = RingConfig[ringNumber].MaxAnimals or 0
+	local slots = ringSlots[ringNumber]
+	local free = {}
+	for index = 1, max do
+		if slots[index] == nil then
+			table.insert(free, index)
+		end
+	end
+	if #free == 0 then
+		return nil
+	end
+	return free[rng:NextInteger(1, #free)]
+end
+
+local function slotPosition(ringNumber: number, slotIndex: number): Vector3
 	local ring = RingConfig[ringNumber]
 	local center = fieldCenter.Position
+	local max = ring.MaxAnimals
 
+	-- Randomized angle INSIDE the slot's sector; the 10% margins keep
+	-- neighbors from visually merging at sector edges.
+	local sectorWidth = 2 * math.pi / max
+	local angle = ringSlotRotation[ringNumber]
+		+ (slotIndex - 1) * sectorWidth
+		+ sectorWidth * rng:NextNumber(0.1, 0.9)
 	-- Uniform over the annulus AREA, not the radius, so spawns don't cluster
 	-- toward the inner edge.
 	local r = math.sqrt(rng:NextNumber(ring.InnerRadius ^ 2, ring.OuterRadius ^ 2))
-	local angle = rng:NextNumber(0, 2 * math.pi)
 	local x = center.X + math.cos(angle) * r
 	local z = center.Z + math.sin(angle) * r
 
@@ -84,18 +121,13 @@ local function randomPositionInRing(ringNumber: number): Vector3
 	return Vector3.new(x, groundY, z)
 end
 
-local function spawnAnimal(ringNumber: number): string?
-	local pool = spawnTables[ringNumber]
-	if not pool or #pool == 0 then
-		return nil
-	end
-
-	local animalType = pool[rng:NextInteger(1, #pool)]
-	local animal = AnimalConfig[animalType]
-	local id = HttpService:GenerateGUID(false)
-
+-- Builds and registers a live field animal. Shared by fresh ring spawns and
+-- by PlaceAnimal (spill recovery), so a spilled animal is a completely
+-- ordinary field animal: same prompt, same claim semantics, grabbable by
+-- anyone.
+local function createAnimal(id: string, animalType: string, ringNumber: number, weight: number, incomePerSecond: number, position: Vector3): ()
 	-- Placeholder: a cube sized by weight so heavier animals read bigger.
-	local size = 1.5 + animal.Weight * 0.35
+	local size = 1.5 + weight * 0.35
 	local part = Instance.new("Part")
 	part.Name = animalType
 	part.Size = Vector3.new(size, size, size)
@@ -104,14 +136,13 @@ local function spawnAnimal(ringNumber: number): string?
 	part.Anchored = true
 	part.CanCollide = false
 
-	local position = randomPositionInRing(ringNumber)
 	part.CFrame = CFrame.new(position + Vector3.new(0, size / 2, 0))
 
 	part:SetAttribute("AnimalId", id)
 	part:SetAttribute("AnimalType", animalType)
 	part:SetAttribute("Ring", ringNumber)
-	part:SetAttribute("Weight", animal.Weight)
-	part:SetAttribute("IncomePerSecond", animal.IncomePerSecond)
+	part:SetAttribute("Weight", weight)
+	part:SetAttribute("IncomePerSecond", incomePerSecond)
 
 	-- Debug label so graybox playtests can identify animals at a glance.
 	local billboard = Instance.new("BillboardGui")
@@ -133,13 +164,71 @@ local function spawnAnimal(ringNumber: number): string?
 		Id = id,
 		Type = animalType,
 		Ring = ringNumber,
-		Weight = animal.Weight,
-		IncomePerSecond = animal.IncomePerSecond,
+		Weight = weight,
+		IncomePerSecond = incomePerSecond,
 		Part = part,
 	}
 	ringCounts[ringNumber] = (ringCounts[ringNumber] or 0) + 1
+end
 
+local function spawnAnimal(ringNumber: number): string?
+	local pool = spawnTables[ringNumber]
+	if not pool or #pool == 0 then
+		return nil
+	end
+
+	local slotIndex = pickFreeSlot(ringNumber)
+	if not slotIndex then
+		return nil -- every sector occupied (spilled animals may hold the count elsewhere)
+	end
+
+	local animalType = pool[rng:NextInteger(1, #pool)]
+	local animal = AnimalConfig[animalType]
+	local id = HttpService:GenerateGUID(false)
+	createAnimal(id, animalType, ringNumber, animal.Weight, animal.IncomePerSecond, slotPosition(ringNumber, slotIndex))
+	animals[id].Slot = slotIndex
+	ringSlots[ringNumber][slotIndex] = id
 	return id
+end
+
+-- Returns a previously-claimed animal record to the field as a live animal
+-- (spill). Identity is preserved — the same AnimalId becomes claimable again
+-- by any player through the normal Pickup path. Rejects an id that is
+-- already live, so one record can never produce two field animals.
+function AnimalSpawner.PlaceAnimal(record, position: Vector3): boolean
+	if not started then
+		return false
+	end
+	if type(record) ~= "table" or type(record.AnimalId) ~= "string" or animals[record.AnimalId] then
+		return false
+	end
+
+	-- Ground-snap the requested position like normal spawns. Characters are
+	-- excluded so a spill never lands an animal on someone's head.
+	local height = Config.Spawning.SpawnRaycastHeight
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local exclude = { animalsFolder }
+	for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+		if player.Character then
+			table.insert(exclude, player.Character)
+		end
+	end
+	params.FilterDescendantsInstances = exclude
+	local hit = Workspace:Raycast(
+		Vector3.new(position.X, position.Y + height, position.Z),
+		Vector3.new(0, -height * 2, 0),
+		params)
+	local groundY = if hit then hit.Position.Y else position.Y
+
+	createAnimal(
+		record.AnimalId,
+		record.AnimalType,
+		record.Ring,
+		record.Weight,
+		record.IncomePerSecond,
+		Vector3.new(position.X, groundY, position.Z))
+	return true
 end
 
 local function populateRing(ringNumber: number)
@@ -200,6 +289,9 @@ function AnimalSpawner.RemoveAnimal(id: string)
 
 	animals[id] = nil
 	ringCounts[animal.Ring] -= 1
+	if animal.Slot then
+		ringSlots[animal.Ring][animal.Slot] = nil
+	end
 	animal.Part:Destroy()
 
 	local respawnSeconds = Config.Spawning.RespawnSecondsByRing[animal.Ring]

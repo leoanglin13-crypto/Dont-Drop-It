@@ -14,6 +14,10 @@ local AnimalSpawner = require(script.Parent.AnimalSpawner)
 local RingZones = require(script.Parent.RingZones)
 local WeightMovement = require(script.Parent.WeightMovement)
 local Pickup = require(script.Parent.Pickup)
+local HeatService = require(script.Parent.HeatService)
+local RangerService = require(script.Parent.RangerService)
+local Spill = require(script.Parent.Spill)
+local Ragdoll = require(script.Parent.Ragdoll)
 
 CarryState.Start()
 CarryReplication.Start()
@@ -27,6 +31,11 @@ AnimalSpawner.Start()
 RingZones.Start()
 WeightMovement.Start()
 Pickup.Start()
+-- RangerService subscribes to HeatService, and Spill subscribes to
+-- RangerService, so they start in that order.
+HeatService.Start()
+RangerService.Start()
+Spill.Start()
 
 if RunService:IsStudio() then
 	-- Studio-only test bridge for driving the live module instances from
@@ -43,6 +52,10 @@ if RunService:IsStudio() then
 		RingZones = RingZones,
 		WeightMovement = WeightMovement,
 		Pickup = Pickup,
+		HeatService = HeatService,
+		RangerService = RangerService,
+		Spill = Spill,
+		Ragdoll = Ragdoll,
 	}
 	local bridge = Instance.new("BindableFunction")
 	bridge.Name = "TestBridge"

@@ -4,7 +4,9 @@ local RingConfig = {
 		Active = true,
 		InnerRadius = 187.5,
 		OuterRadius = 300,
-		MaxAnimals = 12,
+		-- The outer ring is by far the largest band; 20 keeps the onboarding
+		-- area feeling stocked from every Sanctuary side.
+		MaxAnimals = 20,
 		BumpingEnabled = false,
 		RangersEnabled = false,
 	},

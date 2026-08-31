@@ -142,21 +142,89 @@ Config.SpeedPenalty = 0.72
 Config.BumpWindup = 0.4
 Config.BumpCooldown = 4
 Config.BumpImmunityWeight = 3
-Config.SpillRadius = 15
 
-Config.HeatThresholds = {
-	Noticed = 6,
-	Wanted = 15,
-	HighValue = 25,
+-- Heat is TRIP risk on a 0-100 scale: it only exists while the player is
+-- carrying unbanked animals, ratchets upward during the trip (escaping
+-- outward does not cool it), and resets to 0 only when the trip ends
+-- (successful Sanctuary placement, or death/reset losing the trip).
+Config.Heat = {
+	MaxHeat = 100,
+
+	-- Taking ANYTHING from Ranger territory registers immediately: this flat
+	-- amount applies the moment the player carries at least one animal, so
+	-- even a single Frog draws a (slow, escapable) Ring 1 Ranger. Early
+	-- forgiveness comes from Ranger speed, not from zero attention.
+	TripBaseHeat = 40,
+
+	-- weightHeat = (CarriedWeight / CarryCapacity) * WeightContribution
+	WeightContribution = 70,
+
+	RingBonus = {
+		[1] = 0,
+		[2] = 10,
+		[3] = 25,
+		[4] = 40,
+	},
+
+	CautionThreshold = 40,
+	HotThreshold = 70,
 }
 
-Config.HeatDecayPerSecond = 2
+Config.Rangers = {
+	FirstRangerHeat = 40,
+	SecondRangerHeat = 75,
 
-Config.RangerSpeedMin = 13
-Config.RangerSpeedMax = 17
-Config.RangerSwingTelegraph = 0.5
+	UpdateInterval = 0.15,
+	CatchDistance = 4,
+	CatchCooldown = 2,
 
-Config.RangerKnockLooseMin = 1
-Config.RangerKnockLooseMax = 2
+	-- Ring-specific pressure: deeper towers field faster Rangers AND hit
+	-- harder on a catch. Player base speed is 22 before weight slowdown, so
+	-- Ring 1 is introductory and only the Ring 4 Ranger outpaces an unloaded
+	-- player — escaped by leaving its territory, since Rangers never cross
+	-- the FieldRadius boundary. Knockback speeds are tuned for roughly
+	-- 14 / 20 / 27 / 33 studs of displacement by ring.
+	-- NOTE: knockback speeds are calibrated against RAGDOLLED bodies, which
+	-- slide much farther than standing ones (~0.9 studs per unit of speed).
+	ByRing = {
+		[1] = { MoveSpeed = 14, Knockback = { HorizontalSpeed = 16, VerticalSpeed = 30 } },
+		[2] = { MoveSpeed = 18, Knockback = { HorizontalSpeed = 23, VerticalSpeed = 34 } },
+		[3] = { MoveSpeed = 21, Knockback = { HorizontalSpeed = 31, VerticalSpeed = 38 } },
+		[4] = { MoveSpeed = 24, Knockback = { HorizontalSpeed = 38, VerticalSpeed = 42 } },
+	},
+	DefaultMoveSpeed = 16,
+
+	-- World markers the service reads. The towers are replaceable art; only
+	-- the RangerSpawn marker inside each tower matters to gameplay.
+	TowersFolderName = "RangerTowers",
+	SpawnMarkerName = "RangerSpawn",
+	-- Catch impact recovery: the player briefly ragdolls, then gets up on
+	-- their own. No further catch can land during the grace window, which
+	-- must cover ragdoll + get-up so a downed player is never chain-hit.
+	RagdollDuration = 1.25,
+	CatchGraceSeconds = 2.5,
+
+	-- A returning Ranger despawns once this close to its home marker.
+	HomeArriveDistance = 5,
+	-- Rangers stop this many studs inside FieldRadius; they never cross it.
+	BoundaryMargin = 2,
+
+	-- Catch impact fallback (rings use ByRing[ring].Knockback), plus the
+	-- shared constraint lifetime. Applied as a short-lived velocity
+	-- constraint (raw velocity writes are damped instantly by Humanoid
+	-- ground control on the owning client). Never a kill.
+	Knockback = {
+		HorizontalSpeed = 40,
+		VerticalSpeed = 30,
+		DurationSeconds = 0.2,
+	},
+}
+
+Config.Spill = {
+	-- Spilled animals scatter into this annulus around the catch position:
+	-- a visible scramble, not a pile and not across the map.
+	ScatterRadiusMin = 4,
+	ScatterRadiusMax = 12,
+}
 
 return Config
